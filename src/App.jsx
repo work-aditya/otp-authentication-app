@@ -43,17 +43,11 @@ export default function App() {
 
   return (
     <main className="app-container">
-      {/* Dynamic Ambient Background Glows */}
-      <div className="ambient-glow glow-1" aria-hidden="true" />
-      <div className="ambient-glow glow-2" aria-hidden="true" />
-      <div className="ambient-glow glow-3" aria-hidden="true" />
-      <div className="grid-overlay" aria-hidden="true" />
-
       <div className="auth-wrapper">
         {authLoading ? (
-          <div className="auth-card" style={{ textAlign: 'center', padding: '60px 20px' }}>
-            <div className="spinner" style={{ width: '32px', height: '32px', margin: '0 auto 16px' }} />
-            <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>Loading session...</p>
+          <div style={{ padding: '40px 0' }}>
+            <div className="spinner spinner-light" style={{ width: '20px', height: '20px', marginBottom: '12px' }} />
+            <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>Initializing authentication system...</p>
           </div>
         ) : user ? (
           <SuccessDashboard user={user} />

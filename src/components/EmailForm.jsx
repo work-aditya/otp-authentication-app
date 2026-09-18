@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { sendOtpToEmail } from '../services/otpService';
-import { Mail, ArrowRight, ShieldCheck, AlertCircle } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 
 export default function EmailForm({ onOtpSent, initialEmail = '' }) {
   const [email, setEmail] = useState(initialEmail);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isRegistering, setIsRegistering] = useState(false);
 
   const validateEmail = (val) => {
     return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(val.trim());
@@ -22,13 +23,12 @@ export default function EmailForm({ onOtpSent, initialEmail = '' }) {
     }
 
     if (!validateEmail(cleanEmail)) {
-      setError('Please enter a valid email address format.');
+      setError('Please enter a valid email address.');
       return;
     }
 
     setLoading(true);
     try {
-      // Direct Real-Time Cloud Firestore OTP Generation & Expiry
       const result = await sendOtpToEmail(cleanEmail);
 
       if (result && result.success) {
@@ -48,69 +48,80 @@ export default function EmailForm({ onOtpSent, initialEmail = '' }) {
   };
 
   return (
-    <div className="auth-card" id="email-step-card">
-      <div className="card-header">
-        <div className="brand-icon-wrapper" aria-hidden="true">
-          <ShieldCheck size={32} />
-        </div>
-        <h1 className="card-title">Sign In with OTP</h1>
-        <p className="card-subtitle">
-          Enter your email to receive a secure, time-based 6-digit verification code.
+    <div id="email-step-view" className="auth-form-container">
+      {/* Top-left Application Branding & Tagline */}
+      <div className="brand-header">
+        <h1 className="brand-title">AuthVault</h1>
+        <p className="brand-tagline">
+          {isRegistering
+            ? 'Initialize an encrypted vault with time-based verification.'
+            : 'Zero-knowledge time-based verification. Direct to inbox.'}
         </p>
       </div>
 
       {error && (
         <div className="alert-box alert-error" id="email-error-alert" role="alert">
-          <AlertCircle size={18} style={{ flexShrink: 0, marginTop: '2px' }} />
+          <AlertCircle size={16} style={{ flexShrink: 0, marginTop: '2px' }} />
           <span>{error}</span>
         </div>
       )}
 
-      <form onSubmit={handleSubmit} noValidate>
+      <form onSubmit={handleSubmit} noValidate className="auth-form">
         <div className="form-group">
           <label htmlFor="email-input" className="form-label">
-            Email Address
+            Email
           </label>
-          <div className="input-wrapper">
-            <span className="input-icon">
-              <Mail size={18} />
-            </span>
-            <input
-              id="email-input"
-              type="email"
-              className="form-input"
-              placeholder="name@company.com"
-              value={email}
-              onChange={(e) => {
-                setEmail(e.target.value);
-                if (error) setError('');
-              }}
-              disabled={loading}
-              autoFocus
-              autoComplete="email"
-              required
-            />
-          </div>
+          <input
+            id="email-input"
+            type="email"
+            className="form-input"
+            placeholder="operator@security.internal"
+            value={email}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              if (error) setError('');
+            }}
+            disabled={loading}
+            autoFocus
+            autoComplete="email"
+            required
+          />
         </div>
 
-        <button
-          id="send-otp-btn"
-          type="submit"
-          className="btn-primary"
-          disabled={loading || !email.trim()}
-        >
-          {loading ? (
-            <>
-              <span className="spinner" aria-hidden="true" />
-              <span>Generating & Sending Code...</span>
-            </>
-          ) : (
-            <>
-              <span>Send Verification Code</span>
-              <ArrowRight size={18} />
-            </>
-          )}
-        </button>
+        {/* Compact Solid Gold Button */}
+        <div>
+          <button
+            id="send-otp-btn"
+            type="submit"
+            className="btn-primary"
+            disabled={loading || !email.trim()}
+          >
+            {loading ? (
+              <>
+                <span className="spinner" aria-hidden="true" />
+                <span>Sending token...</span>
+              </>
+            ) : (
+              <span>{isRegistering ? 'Create vault' : 'Sign in'}</span>
+            )}
+          </button>
+        </div>
+
+        {/* Simple Secondary Text Link Action */}
+        <div className="secondary-action-wrapper">
+          <button
+            id="toggle-vault-mode-btn"
+            type="button"
+            className="btn-link"
+            onClick={() => {
+              setIsRegistering(!isRegistering);
+              setError('');
+            }}
+            disabled={loading}
+          >
+            {isRegistering ? 'Sign in to existing vault' : 'Create vault'}
+          </button>
+        </div>
       </form>
     </div>
   );

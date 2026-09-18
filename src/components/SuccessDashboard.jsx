@@ -1,14 +1,6 @@
 import React from 'react';
 import { signOut } from 'firebase/auth';
 import { auth } from '../firebase';
-import {
-  CheckCircle2,
-  LogOut,
-  Mail,
-  Fingerprint,
-  Calendar,
-  ShieldCheck,
-} from 'lucide-react';
 
 export default function SuccessDashboard({ user }) {
   const handleLogout = async () => {
@@ -24,73 +16,63 @@ export default function SuccessDashboard({ user }) {
     : new Date().toLocaleTimeString();
 
   return (
-    <div className="auth-card dashboard-card" id="success-dashboard-card">
-      <div className="success-badge-icon" aria-hidden="true">
-        <CheckCircle2 size={40} />
+    <div id="success-dashboard-view" className="session-container">
+      {/* Top-left Application Branding & Tagline */}
+      <div className="brand-header">
+        <h1 className="brand-title">AuthVault</h1>
+        <div className="session-badge">
+          <span className="status-dot" />
+          <span>Session Active</span>
+        </div>
+        <p className="brand-tagline">
+          Vault clearance granted. Secure session established via time-based token.
+        </p>
       </div>
 
-      <h1 className="card-title">Successfully Authenticated!</h1>
-      <p className="card-subtitle">
-        Your email has been verified and you are now signed in with Firebase Authentication.
-      </p>
-
-      {/* User Information Box */}
-      <div className="user-profile-box" id="user-profile-box">
-        <div className="profile-row">
-          <span className="profile-label">
-            <Mail size={16} />
-            Email Address
-          </span>
-          <span className="profile-value" id="profile-email">
-            {user?.email || 'Authenticated User'}
+      {/* Session Diagnostics / Key-Value Table */}
+      <div className="session-props-table" id="user-profile-box">
+        <div className="session-prop-row">
+          <span className="prop-label">Identity</span>
+          <span className="prop-value" id="profile-email">
+            {user?.email || 'Authenticated Operator'}
           </span>
         </div>
 
-        <div className="profile-row">
-          <span className="profile-label">
-            <Fingerprint size={16} />
-            User UID
-          </span>
+        <div className="session-prop-row">
+          <span className="prop-label">UID</span>
           <span
-            className="profile-value"
+            className="prop-value"
             id="profile-uid"
-            style={{ fontSize: '12px', maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis' }}
+            style={{ maxWidth: '240px', overflow: 'hidden', textOverflow: 'ellipsis' }}
             title={user?.uid}
           >
             {user?.uid}
           </span>
         </div>
 
-        <div className="profile-row">
-          <span className="profile-label">
-            <ShieldCheck size={16} />
-            Auth Method
-          </span>
-          <span className="status-pill" id="profile-auth-method">
-            <span className="status-dot" />
+        <div className="session-prop-row">
+          <span className="prop-label">Clearance Type</span>
+          <span className="prop-value" id="profile-auth-method">
             Time-Based OTP (Verified)
           </span>
         </div>
 
-        <div className="profile-row">
-          <span className="profile-label">
-            <Calendar size={16} />
-            Signed In At
-          </span>
-          <span className="profile-value" style={{ fontSize: '12.5px' }}>
+        <div className="session-prop-row">
+          <span className="prop-label">Timestamp</span>
+          <span className="prop-value">
             {creationTime}
           </span>
         </div>
       </div>
 
+      {/* Compact Disconnect Button */}
       <button
         id="logout-btn"
         type="button"
         className="btn-secondary"
         onClick={handleLogout}
       >
-        <LogOut size={16} />
-        <span>Log Out</span>
+        <span>Disconnect Session</span>
       </button>
     </div>
   );

@@ -1,16 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { sendOtpToEmail, verifyOtpAndAuthenticate } from '../services/otpService';
-import confetti from 'canvas-confetti';
-import {
-  Clock,
-  RotateCw,
-  ArrowLeft,
-  KeyRound,
-  AlertCircle,
-  CheckCircle2,
-  MailCheck,
-  Inbox,
-} from 'lucide-react';
+import { AlertCircle, RotateCw } from 'lucide-react';
 
 export default function OtpVerification({
   email,
@@ -25,8 +15,8 @@ export default function OtpVerification({
   const [infoMessage, setInfoMessage] = useState('');
   const [shake, setShake] = useState(false);
 
-  // 2-Minute Countdown state
-  const totalSeconds = Math.floor(expiresInMs / 1000); // strictly 120 seconds
+  // 2-Minute Countdown state (strictly 120s)
+  const totalSeconds = Math.floor(expiresInMs / 1000);
   const [secondsRemaining, setSecondsRemaining] = useState(totalSeconds);
   const [isExpired, setIsExpired] = useState(false);
 
@@ -65,44 +55,20 @@ export default function OtpVerification({
     return () => clearInterval(cooldownTimer);
   }, [resendCooldown]);
 
-  // Format seconds as MM:SS
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
   };
 
-  // SVG Gauge calculations
-  const radius = 16;
-  const circumference = 2 * Math.PI * radius;
-  const progressPercent = secondsRemaining / totalSeconds;
-  const strokeDashoffset = circumference - progressPercent * circumference;
-
-  // Determine timer color theme
-  const getTimerClass = () => {
-    if (isExpired) return 'danger';
-    if (secondsRemaining <= 20) return 'danger';
-    if (secondsRemaining <= 45) return 'warning';
-    return 'normal';
-  };
-
-  const getStrokeColor = () => {
-    if (isExpired || secondsRemaining <= 20) return '#ef4444';
-    if (secondsRemaining <= 45) return '#f59e0b';
-    return '#6366f1';
-  };
-
-  // Trigger error shake
   const triggerShake = () => {
     setShake(true);
-    setTimeout(() => setShake(false), 500);
+    setTimeout(() => setShake(false), 300);
   };
 
-  // Handle single digit input
   const handleChange = (index, value) => {
     if (isExpired) return;
 
-    // Allow only numeric digits
     const cleanVal = value.replace(/\D/g, '');
     if (!cleanVal && value !== '') return;
 
@@ -111,26 +77,22 @@ export default function OtpVerification({
     setOtp(newOtp);
     setError('');
 
-    // Auto-advance to next input
     if (cleanVal && index < 5) {
       inputRefs.current[index + 1]?.focus();
     }
 
-    // Auto submit if all 6 digits entered
     const completeCode = newOtp.join('');
     if (completeCode.length === 6) {
       verifyCode(completeCode);
     }
   };
 
-  // Handle Keydown (Backspace navigation)
   const handleKeyDown = (index, e) => {
     if (e.key === 'Backspace' && !otp[index] && index > 0) {
       inputRefs.current[index - 1]?.focus();
     }
   };
 
-  // Handle Paste event
   const handlePaste = (e) => {
     if (isExpired) return;
     e.preventDefault();
@@ -152,7 +114,6 @@ export default function OtpVerification({
     }
   };
 
-  // Verify OTP submission against Cloud Firestore & Firebase Auth
   const verifyCode = async (codeToVerify) => {
     const fullOtp = codeToVerify || otp.join('');
     if (fullOtp.length !== 6) {
@@ -162,7 +123,7 @@ export default function OtpVerification({
     }
 
     if (isExpired) {
-      setError('This OTP has expired (2 minutes limit). Please click "Resend Code" to get a fresh one.');
+      setError('Security token expired (2 min limit). Please request a fresh token.');
       triggerShake();
       return;
     }
@@ -174,29 +135,17 @@ export default function OtpVerification({
       const result = await verifyOtpAndAuthenticate(email, fullOtp);
 
       if (result && result.success) {
-        try {
-          confetti({
-            particleCount: 85,
-            spread: 75,
-            origin: { y: 0.6 },
-            colors: ['#6366f1', '#10b981', '#f59e0b', '#ec4899'],
-          });
-        } catch (e) {
-          // ignore confetti errors
-        }
-
         onVerified(result.user);
       }
     } catch (err) {
       console.error('Error verifying OTP:', err);
-      setError(err.message || 'Invalid verification code. Please check your email and try again.');
+      setError(err.message || 'Invalid verification token. Please try again.');
       triggerShake();
     } finally {
       setLoading(false);
     }
   };
 
-  // Handle Resend OTP
   const handleResend = async () => {
     if (resending || resendCooldown > 0) return;
 
@@ -207,128 +156,66 @@ export default function OtpVerification({
       const result = await sendOtpToEmail(email);
 
       if (result && result.success) {
-        // Reset OTP input boxes
         setOtp(['', '', '', '', '', '']);
-        // Reset 2-minute countdown
         setSecondsRemaining(Math.floor((result.expiresInMs || 120000) / 1000));
         setIsExpired(false);
-        // Reset resend cooldown
         setResendCooldown(30);
         inputRefs.current[0]?.focus();
-
-        setInfoMessage('A fresh verification code has been dispatched to your email.');
+        setInfoMessage('New security token dispatched to your email.');
       }
     } catch (err) {
       console.error('Resend error:', err);
-      setError(err.message || 'Failed to resend code.');
+      setError(err.message || 'Failed to dispatch new token.');
     } finally {
       setResending(false);
     }
   };
 
   return (
-    <div className="auth-card" id="otp-step-card">
-      <div className="card-header">
-        <div className="brand-icon-wrapper" aria-hidden="true">
-          <KeyRound size={32} />
-        </div>
-        <h1 className="card-title">Check Your Email</h1>
-        <p className="card-subtitle">
-          We sent a 6-digit verification code to <span className="highlight-email">{email}</span>
+    <div id="otp-step-view" className="auth-form-container">
+      {/* Top-left Application Branding & Tagline */}
+      <div className="brand-header">
+        <h1 className="brand-title">AuthVault</h1>
+        <p className="brand-tagline">
+          Enter the 6-digit security token dispatched to <span className="highlight-text">{email}</span>
         </p>
       </div>
 
-      {/* Email Inbox Delivery Notice */}
-      <div
-        className="alert-box alert-info"
-        id="inbox-notice-banner"
-        style={{
-          background: 'rgba(99, 102, 241, 0.1)',
-          borderColor: 'rgba(99, 102, 241, 0.25)',
-          color: '#c7d2fe',
-          alignItems: 'center',
-          gap: '10px',
-        }}
-      >
-        <Inbox size={18} style={{ color: '#818cf8', flexShrink: 0 }} />
-        <span style={{ fontSize: '13px' }}>
-          Verification code dispatched to <strong>{email}</strong> (check your inbox or spam folder).
-        </span>
-      </div>
-
       {infoMessage && (
-        <div
-          className="alert-box alert-success"
-          id="info-message-alert"
-          style={{
-            background: 'rgba(16, 185, 129, 0.12)',
-            borderColor: 'rgba(16, 185, 129, 0.3)',
-            color: '#6ee7b7',
-            fontSize: '13px',
-          }}
-        >
-          <MailCheck size={16} style={{ flexShrink: 0 }} />
+        <div className="alert-box alert-success" id="info-message-alert">
           <span>{infoMessage}</span>
         </div>
       )}
 
-      {/* 2-Minute Expiration Timer Banner */}
-      <div className={`timer-banner ${getTimerClass()}`} id="timer-banner">
-        <div className="timer-left">
-          <div className="timer-gauge-wrapper">
-            <svg width="40" height="40" className="timer-gauge-svg">
-              <circle
-                cx="20"
-                cy="20"
-                r={radius}
-                fill="none"
-                strokeWidth="3.5"
-                className="gauge-bg"
-              />
-              <circle
-                cx="20"
-                cy="20"
-                r={radius}
-                fill="none"
-                strokeWidth="3.5"
-                stroke={getStrokeColor()}
-                strokeDasharray={circumference}
-                strokeDashoffset={strokeDashoffset}
-                strokeLinecap="round"
-                className="gauge-progress"
-              />
-            </svg>
-            <Clock size={16} style={{ position: 'absolute', color: getStrokeColor() }} />
-          </div>
-          <div className="timer-info">
-            <span className="timer-title">Time Remaining</span>
-            <span className="timer-countdown" id="countdown-display">
-              {formatTime(secondsRemaining)}
-            </span>
-          </div>
+      {error && (
+        <div className="alert-box alert-error" id="otp-error-alert" role="alert">
+          <AlertCircle size={16} style={{ flexShrink: 0, marginTop: '2px' }} />
+          <span>{error}</span>
         </div>
+      )}
 
+      {/* Utilitarian Timer Bar */}
+      <div className="timer-bar" id="timer-banner">
+        <div className="timer-left">
+          <span>Token validity:</span>
+          <span className="timer-countdown" id="countdown-display">
+            {formatTime(secondsRemaining)}
+          </span>
+        </div>
         <div>
           {isExpired ? (
-            <span className="timer-status-badge badge-expired" id="badge-expired">
-              <AlertCircle size={13} />
+            <span className="timer-badge expired" id="badge-expired">
+              <span className="status-dot" />
               Expired
             </span>
           ) : (
-            <span className="timer-status-badge badge-active" id="badge-active">
+            <span className="timer-badge active" id="badge-active">
               <span className="status-dot" />
-              Valid (2 min)
+              Active
             </span>
           )}
         </div>
       </div>
-
-      {error && (
-        <div className="alert-box alert-error" id="otp-error-alert" role="alert">
-          <AlertCircle size={18} style={{ flexShrink: 0 }} />
-          <span>{error}</span>
-        </div>
-      )}
 
       {/* 6-Digit OTP Inputs */}
       <div className={`otp-container ${shake ? 'shake' : ''}`} onPaste={handlePaste}>
@@ -351,53 +238,52 @@ export default function OtpVerification({
         ))}
       </div>
 
-      <button
-        id="verify-otp-btn"
-        type="button"
-        className="btn-primary"
-        onClick={() => verifyCode()}
-        disabled={loading || isExpired || otp.join('').length !== 6}
-      >
-        {loading ? (
-          <>
-            <span className="spinner" aria-hidden="true" />
-            <span>Verifying with Firestore & Auth...</span>
-          </>
-        ) : (
-          <>
-            <CheckCircle2 size={18} />
-            <span>Verify & Sign In</span>
-          </>
-        )}
-      </button>
+      {/* Compact Gold Verification Button */}
+      <div>
+        <button
+          id="verify-otp-btn"
+          type="button"
+          className="btn-primary"
+          onClick={() => verifyCode()}
+          disabled={loading || isExpired || otp.join('').length !== 6}
+        >
+          {loading ? (
+            <>
+              <span className="spinner" aria-hidden="true" />
+              <span>Verifying token...</span>
+            </>
+          ) : (
+            <span>Verify & Enter</span>
+          )}
+        </button>
+      </div>
 
-      {/* Resend & Back controls */}
-      <div className="resend-row">
+      {/* Secondary Actions: Change Email & Resend Token */}
+      <div className="otp-actions-row">
         <button
           id="back-to-email-btn"
           type="button"
-          className="btn-back"
+          className="btn-link"
           onClick={onBack}
           disabled={loading}
         >
-          <ArrowLeft size={16} />
-          <span>Change Email</span>
+          Change email
         </button>
 
         <button
           id="resend-otp-btn"
           type="button"
-          className="btn-text"
+          className="btn-link"
           onClick={handleResend}
           disabled={resending || (!isExpired && resendCooldown > 0)}
         >
-          <RotateCw size={15} className={resending ? 'spinner' : ''} />
+          {resending && <RotateCw size={13} className="spinner" />}
           <span>
             {resending
-              ? 'Sending...'
+              ? 'Dispatching...'
               : resendCooldown > 0 && !isExpired
-              ? `Resend in ${resendCooldown}s`
-              : 'Resend OTP'}
+              ? `Resend token (${resendCooldown}s)`
+              : 'Resend token'}
           </span>
         </button>
       </div>
