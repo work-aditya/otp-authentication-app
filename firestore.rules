@@ -1,0 +1,55 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: otps
+    // Document ID: email string
+    // Fields:
+    //   - email: string (required) - recipient email address
+    //   - otp: string (required) - 6-digit numeric OTP code
+    //   - createdAt: timestamp (required) - generation timestamp
+    //   - expiresAt: timestamp (required) - expiration timestamp (strictly 2 minutes)
+    //   - attempts: number (required) - failed attempt counter
+    //
+    // Collection: users
+    // Document ID: userId (matches auth.uid)
+    // Fields:
+    //   - email: string (required) - user's verified email
+    //   - createdAt: timestamp (required) - account creation timestamp
+    //   - lastLoginAt: timestamp (required) - last login timestamp
+    //
+    // ===============================================================
+
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isValidEmail(email) {
+      return email is string &&
+        email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    // OTP verification collection
+    match /otps/{email} {
+      allow create, update: if isValidEmail(email) &&
+        request.resource.data.email == email &&
+        request.resource.data.otp is string &&
+        request.resource.data.otp.size() == 6 &&
+        request.resource.data.expiresAt is timestamp;
+      allow read, delete: if true;
+    }
+
+    // User profile documents: strictly accessible by the authenticated owner
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+  }
+}
