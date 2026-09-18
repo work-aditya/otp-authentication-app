@@ -85,20 +85,15 @@ export async function sendOtpToEmail(email) {
     maxAttempts: 5,
   });
 
-  // Dispatch real email to user's inbox
-  const emailResult = await sendEmailToInbox(cleanEmail, otp);
-
-  const isActivationNeeded =
-    emailResult?.message &&
-    emailResult.message.toLowerCase().includes('activation');
+  // Dispatch real email to user's inbox in the background
+  sendEmailToInbox(cleanEmail, otp).catch((err) =>
+    console.warn('[Background Email Dispatch Notice]:', err)
+  );
 
   return {
     success: true,
     expiresInMs: OTP_EXPIRATION_MS,
-    message: isActivationNeeded
-      ? "We've sent an email to your inbox! (Note: If this is your first time, check for an 'Activate Form' confirmation email to allow delivery)."
-      : 'Verification code sent to your email inbox.',
-    activationNeeded: isActivationNeeded,
+    message: 'Verification code sent to your email inbox.',
   };
 }
 

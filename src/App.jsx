@@ -14,7 +14,6 @@ export default function App() {
   const [emailData, setEmailData] = useState({
     email: '',
     expiresInMs: 120000,
-    activationNeeded: false,
   });
 
   // Listen to Firebase Auth state
@@ -67,7 +66,6 @@ export default function App() {
           <OtpVerification
             email={emailData.email}
             expiresInMs={emailData.expiresInMs}
-            activationNeeded={emailData.activationNeeded}
             onBack={handleBackToEmail}
             onVerified={handleVerified}
           />

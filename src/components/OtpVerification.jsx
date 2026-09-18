@@ -15,7 +15,6 @@ import {
 export default function OtpVerification({
   email,
   expiresInMs = 120000,
-  activationNeeded = false,
   onBack,
   onVerified,
 }) {
@@ -23,11 +22,7 @@ export default function OtpVerification({
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
   const [error, setError] = useState('');
-  const [infoMessage, setInfoMessage] = useState(
-    activationNeeded
-      ? "FormSubmit sent a confirmation email to your inbox. Please click 'Activate Form' in that email to receive all OTPs."
-      : ''
-  );
+  const [infoMessage, setInfoMessage] = useState('');
   const [shake, setShake] = useState(false);
 
   // 2-Minute Countdown state
@@ -221,11 +216,7 @@ export default function OtpVerification({
         setResendCooldown(30);
         inputRefs.current[0]?.focus();
 
-        if (result.activationNeeded) {
-          setInfoMessage("FormSubmit sent an activation email. Please click 'Activate Form' in your inbox.");
-        } else {
-          setInfoMessage('A fresh verification code has been dispatched to your email.');
-        }
+        setInfoMessage('A fresh verification code has been dispatched to your email.');
       }
     } catch (err) {
       console.error('Resend error:', err);
@@ -261,7 +252,7 @@ export default function OtpVerification({
       >
         <Inbox size={18} style={{ color: '#818cf8', flexShrink: 0 }} />
         <span style={{ fontSize: '13px' }}>
-          Please open your <strong>Gmail inbox</strong> (or Spam folder) to view your 6-digit OTP code.
+          Verification code dispatched to <strong>{email}</strong> (check your inbox or spam folder).
         </span>
       </div>
 
