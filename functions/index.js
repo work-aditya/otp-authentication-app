@@ -7,8 +7,8 @@ admin.initializeApp();
 const db = admin.firestore();
 
 // Rate limiting & cooldown constants
-const OTP_EXPIRATION_MS = 2 * 60 * 1000; // Strictly 2 minutes
-const RESEND_COOLDOWN_MS = 60 * 1000; // 1 minute (60 seconds) cooldown between resends
+const OTP_EXPIRATION_MS = 5 * 60 * 1000; // Strictly 5 minutes
+const RESEND_COOLDOWN_MS = 90 * 1000; // 1.5 minutes (90 seconds) cooldown between resends
 const MAX_ATTEMPTS = 5;
 
 /**
@@ -115,7 +115,7 @@ exports.sendOtp = functions.https.onCall(async (data, context) => {
       from: fromAddress,
       to: email,
       subject: `Your Verification Code: ${otp}`,
-      text: `Your one-time verification code is: ${otp}. It will expire in exactly 2 minutes. If you did not request this code, please ignore this email.`,
+      text: `Your one-time verification code is: ${otp}. It will expire in exactly 5 minutes. If you did not request this code, please ignore this email.`,
       html: `
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 32px 24px; background: #0f172a; border-radius: 16px; color: #f8fafc; border: 1px solid #1e293b;">
           <div style="text-align: center; margin-bottom: 24px;">
@@ -132,7 +132,7 @@ exports.sendOtp = functions.https.onCall(async (data, context) => {
 
           <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: 10px; padding: 12px 16px; margin-bottom: 24px; text-align: center;">
             <p style="color: #fca5a5; font-size: 13px; font-weight: 600; margin: 0;">
-              ⏳ This code expires strictly in 2 minutes.
+              ⏳ This code expires strictly in 5 minutes.
             </p>
           </div>
 
@@ -193,14 +193,14 @@ exports.verifyOtp = functions.https.onCall(async (data, context) => {
 
   const otpData = doc.data();
 
-  // Check 2-minute expiration
+  // Check 5-minute expiration
   const now = Date.now();
   if (now > otpData.expiresAt.toMillis()) {
     // Delete expired record
     await docRef.delete();
     throw new functions.https.HttpsError(
       "deadline-exceeded",
-      "This verification code has expired (2 minutes limit). Please request a new OTP."
+      "This verification code has expired (5 minutes limit). Please request a new OTP."
     );
   }
 

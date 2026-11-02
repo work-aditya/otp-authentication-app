@@ -4,7 +4,7 @@ import { AlertCircle, RotateCw } from 'lucide-react';
 
 export default function OtpVerification({
   email,
-  expiresInMs = 120000,
+  expiresInMs = 300000,
   onBack,
   onVerified,
 }) {
@@ -15,13 +15,13 @@ export default function OtpVerification({
   const [infoMessage, setInfoMessage] = useState('');
   const [shake, setShake] = useState(false);
 
-  // 2-Minute Countdown state (strictly 120s)
+  // 5-Minute Countdown state (strictly 300s)
   const totalSeconds = Math.floor(expiresInMs / 1000);
   const [secondsRemaining, setSecondsRemaining] = useState(totalSeconds);
   const [isExpired, setIsExpired] = useState(false);
 
-  // Resend cooldown (1 min / 60s)
-  const [resendCooldown, setResendCooldown] = useState(60);
+  // Resend cooldown (1.5 min / 90s)
+  const [resendCooldown, setResendCooldown] = useState(90);
 
   const inputRefs = useRef([]);
 
@@ -123,7 +123,7 @@ export default function OtpVerification({
     }
 
     if (isExpired) {
-      setError('Security token expired (2 min limit). Please request a fresh token.');
+      setError('Security token expired (5 min limit). Please request a fresh token.');
       triggerShake();
       return;
     }
@@ -157,9 +157,9 @@ export default function OtpVerification({
 
       if (result && result.success) {
         setOtp(['', '', '', '', '', '']);
-        setSecondsRemaining(Math.floor((result.expiresInMs || 120000) / 1000));
+        setSecondsRemaining(Math.floor((result.expiresInMs || 300000) / 1000));
         setIsExpired(false);
-        setResendCooldown(60);
+        setResendCooldown(90);
         inputRefs.current[0]?.focus();
         setInfoMessage('New security token dispatched to your email.');
       }

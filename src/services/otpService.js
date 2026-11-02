@@ -17,8 +17,8 @@ import {
 } from 'firebase/auth';
 import { db, auth } from '../firebase';
 
-const OTP_EXPIRATION_MS = 2 * 60 * 1000; // Strictly 2 minutes
-const RESEND_COOLDOWN_MS = 60 * 1000; // 1 minute (60 seconds) cooldown
+const OTP_EXPIRATION_MS = 5 * 60 * 1000; // Strictly 5 minutes
+const RESEND_COOLDOWN_MS = 90 * 1000; // 1.5 minutes (90 seconds) cooldown
 
 /**
  * Dispatch real email directly to user's inbox using FormSubmit email service
@@ -36,8 +36,8 @@ async function sendEmailToInbox(email, otp) {
         _template: 'box',
         _captcha: 'false',
         Verification_Code: otp,
-        Expires_In: '2 Minutes',
-        Instructions: `Use this 6-digit code to complete your login. It will expire in exactly 2 minutes. If you did not request this, you can ignore this email.`,
+        Expires_In: '5 Minutes',
+        Instructions: `Use this 6-digit code to complete your login. It will expire in exactly 5 minutes. If you did not request this, you can ignore this email.`,
       }),
     });
 
@@ -117,13 +117,13 @@ export async function verifyOtpAndAuthenticate(email, enteredOtp) {
 
   const data = snap.data();
 
-  // Enforce strictly 2-minute expiration
+  // Enforce strictly 5-minute expiration
   const now = Date.now();
   const expiresAtMillis = data.expiresAt?.toMillis ? data.expiresAt.toMillis() : 0;
 
   if (now > expiresAtMillis) {
     await deleteDoc(docRef);
-    throw new Error('This verification code has expired (2 minutes limit). Please request a new code.');
+    throw new Error('This verification code has expired (5 minutes limit). Please request a new code.');
   }
 
   // Check maximum failed attempts

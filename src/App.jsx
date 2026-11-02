@@ -16,7 +16,7 @@ export default function App() {
   const [step, setStep] = useState('email');
   const [emailData, setEmailData] = useState({
     email: '',
-    expiresInMs: 120000,
+    expiresInMs: 300000,
   });
 
   // Listen to Firebase Auth state

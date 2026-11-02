@@ -34,7 +34,7 @@ export default function EmailForm({ onOtpSent, initialEmail = '' }) {
       if (result && result.success) {
         onOtpSent({
           email: cleanEmail,
-          expiresInMs: result.expiresInMs || 120000,
+          expiresInMs: result.expiresInMs || 300000,
         });
       } else {
         setError('Unable to send verification code. Please try again.');

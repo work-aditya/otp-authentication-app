@@ -16,12 +16,12 @@ const otpHash = crypto.createHash('sha256').update(otp + salt).digest('hex');
 assert.strictEqual(otpHash.length, 64, 'SHA-256 hash must be 64 characters hex');
 console.log('✓ Step 2: Salted SHA-256 hash computed successfully');
 
-// 3. Expiration calculation (strictly 2 minutes)
+// 3. Expiration calculation (strictly 5 minutes)
 const now = Date.now();
-const OTP_EXPIRATION_MS = 2 * 60 * 1000;
+const OTP_EXPIRATION_MS = 5 * 60 * 1000;
 const expiresAt = now + OTP_EXPIRATION_MS;
-assert.strictEqual(expiresAt - now, 120000, 'Expiration must be exactly 120,000 ms (2 minutes)');
-console.log('✓ Step 3: Exact 2-minute expiration validated (120,000 ms)');
+assert.strictEqual(expiresAt - now, 300000, 'Expiration must be exactly 300,000 ms (5 minutes)');
+console.log('✓ Step 3: Exact 5-minute expiration validated (300,000 ms)');
 
 // 4. Constant-time verification test
 function verifyCode(inputCode, storedHash, storedSalt, expiryTimestamp, currentTimestamp) {
@@ -33,21 +33,21 @@ function verifyCode(inputCode, storedHash, storedSalt, expiryTimestamp, currentT
   return { valid: isMatch, reason: isMatch ? 'success' : 'invalid' };
 }
 
-// 4a. Valid OTP within 2 minutes
+// 4a. Valid OTP within 5 minutes
 const resultValid = verifyCode(otp, otpHash, salt, expiresAt, now + 30000);
-assert.strictEqual(resultValid.valid, true, 'Valid code within 2 minutes should pass');
-console.log('✓ Step 4a: Valid OTP verification succeeded within 2 minutes');
+assert.strictEqual(resultValid.valid, true, 'Valid code within 5 minutes should pass');
+console.log('✓ Step 4a: Valid OTP verification succeeded within 5 minutes');
 
-// 4b. Invalid OTP within 2 minutes
+// 4b. Invalid OTP within 5 minutes
 const resultWrong = verifyCode('000000', otpHash, salt, expiresAt, now + 30000);
 assert.strictEqual(resultWrong.valid, false, 'Wrong code should fail');
 assert.strictEqual(resultWrong.reason, 'invalid');
 console.log('✓ Step 4b: Invalid OTP correctly rejected');
 
-// 4c. Expired OTP (> 2 minutes)
-const resultExpired = verifyCode(otp, otpHash, salt, expiresAt, now + 120001);
+// 4c. Expired OTP (> 5 minutes)
+const resultExpired = verifyCode(otp, otpHash, salt, expiresAt, now + 300001);
 assert.strictEqual(resultExpired.valid, false, 'Expired code must fail');
 assert.strictEqual(resultExpired.reason, 'expired');
-console.log('✓ Step 4c: Expired OTP (> 2 min) correctly rejected');
+console.log('✓ Step 4c: Expired OTP (> 5 min) correctly rejected');
 
 console.log('\nAll OTP authentication logic tests passed with 100% success!');

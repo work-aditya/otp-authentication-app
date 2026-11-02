@@ -239,7 +239,7 @@ export default function AdminDashboard({ user }) {
               </div>
               <div className="metric-details">
                 <span className="metric-label">Security Protocol</span>
-                <span className="metric-subtext">Time-Based OTP (2m TTL)</span>
+                <span className="metric-subtext">Time-Based OTP (5m TTL)</span>
               </div>
             </div>
           </div>
