@@ -4,6 +4,9 @@ import { auth } from './firebase';
 import EmailForm from './components/EmailForm';
 import OtpVerification from './components/OtpVerification';
 import SuccessDashboard from './components/SuccessDashboard';
+import AdminDashboard from './components/AdminDashboard';
+
+const ADMIN_EMAIL = 'adityaraaaj431@gmail.com';
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -41,16 +44,22 @@ export default function App() {
     }
   };
 
+  const isAdmin = user?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+
   return (
-    <main className="app-container">
-      <div className="auth-wrapper">
+    <main className={`app-container ${isAdmin ? 'admin-layout' : ''}`}>
+      <div className={`auth-wrapper ${isAdmin ? 'auth-wrapper-admin' : ''}`}>
         {authLoading ? (
           <div style={{ padding: '40px 0' }}>
             <div className="spinner spinner-light" style={{ width: '20px', height: '20px', marginBottom: '12px' }} />
             <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>Initializing authentication system...</p>
           </div>
         ) : user ? (
-          <SuccessDashboard user={user} />
+          isAdmin ? (
+            <AdminDashboard user={user} />
+          ) : (
+            <SuccessDashboard user={user} />
+          )
         ) : step === 'email' ? (
           <EmailForm
             onOtpSent={handleOtpSent}

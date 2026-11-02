@@ -37,6 +37,12 @@ service cloud.firestore {
         email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
     }
 
+    function isAdmin() {
+      return isAuthenticated() &&
+        request.auth.token.email != null &&
+        request.auth.token.email.lower() == "adityaraaaj431@gmail.com";
+    }
+
     // OTP verification collection
     match /otps/{email} {
       allow create, update: if isValidEmail(email) &&
@@ -47,9 +53,10 @@ service cloud.firestore {
       allow read, delete: if true;
     }
 
-    // User profile documents: strictly accessible by the authenticated owner
+    // User profile documents: accessible by the authenticated owner or admin
     match /users/{userId} {
-      allow read, write: if isOwner(userId);
+      allow read: if isOwner(userId) || isAdmin();
+      allow write: if isOwner(userId) || isAdmin();
     }
   }
 }

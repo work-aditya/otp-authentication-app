@@ -75,7 +75,7 @@ export default function EmailForm({ onOtpSent, initialEmail = '' }) {
             id="email-input"
             type="email"
             className="form-input"
-            placeholder="operator@security.internal"
+            placeholder="email"
             value={email}
             onChange={(e) => {
               setEmail(e.target.value);

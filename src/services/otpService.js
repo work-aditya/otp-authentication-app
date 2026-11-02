@@ -7,6 +7,9 @@ import {
   serverTimestamp,
   Timestamp,
   increment,
+  collection,
+  onSnapshot,
+  getDocs,
 } from 'firebase/firestore';
 import {
   signInWithEmailAndPassword,
@@ -173,15 +176,27 @@ export async function verifyOtpAndAuthenticate(email, enteredOtp) {
   // Record authenticated session in Firestore users collection
   try {
     const userDocRef = doc(db, 'users', user.uid);
-    await setDoc(
-      userDocRef,
-      {
+    const userSnap = await getDoc(userDocRef);
+    if (!userSnap.exists()) {
+      await setDoc(userDocRef, {
         email: cleanEmail,
-        lastLoginAt: serverTimestamp(),
+        uid: user.uid,
         createdAt: serverTimestamp(),
-      },
-      { merge: true }
-    );
+        lastLoginAt: serverTimestamp(),
+        loginCount: 1,
+      });
+    } else {
+      await setDoc(
+        userDocRef,
+        {
+          email: cleanEmail,
+          uid: user.uid,
+          lastLoginAt: serverTimestamp(),
+          loginCount: increment(1),
+        },
+        { merge: true }
+      );
+    }
   } catch (fsErr) {
     console.warn('Firestore user profile sync notice:', fsErr.message);
   }
@@ -191,3 +206,55 @@ export async function verifyOtpAndAuthenticate(email, enteredOtp) {
     user,
   };
 }
+
+/**
+ * Subscribe to the users collection in real time (for Admin monitoring)
+ */
+export function subscribeToUsers(onUpdate, onError) {
+  const usersRef = collection(db, 'users');
+  return onSnapshot(
+    usersRef,
+    (snapshot) => {
+      const usersList = [];
+      snapshot.forEach((docSnap) => {
+        usersList.push({
+          id: docSnap.id,
+          ...docSnap.data(),
+        });
+      });
+      // Sort in memory by lastLoginAt descending
+      usersList.sort((a, b) => {
+        const timeA = a.lastLoginAt?.toMillis ? a.lastLoginAt.toMillis() : 0;
+        const timeB = b.lastLoginAt?.toMillis ? b.lastLoginAt.toMillis() : 0;
+        return timeB - timeA;
+      });
+      onUpdate(usersList);
+    },
+    (error) => {
+      console.error('Error listening to users collection:', error);
+      if (onError) onError(error);
+    }
+  );
+}
+
+/**
+ * Fetch all logged in users once (for manual refresh)
+ */
+export async function fetchUsersOnce() {
+  const usersRef = collection(db, 'users');
+  const snapshot = await getDocs(usersRef);
+  const usersList = [];
+  snapshot.forEach((docSnap) => {
+    usersList.push({
+      id: docSnap.id,
+      ...docSnap.data(),
+    });
+  });
+  usersList.sort((a, b) => {
+    const timeA = a.lastLoginAt?.toMillis ? a.lastLoginAt.toMillis() : 0;
+    const timeB = b.lastLoginAt?.toMillis ? b.lastLoginAt.toMillis() : 0;
+    return timeB - timeA;
+  });
+  return usersList;
+}
+
