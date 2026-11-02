@@ -8,7 +8,7 @@ const db = admin.firestore();
 
 // Rate limiting & cooldown constants
 const OTP_EXPIRATION_MS = 2 * 60 * 1000; // Strictly 2 minutes
-const RESEND_COOLDOWN_MS = 30 * 1000; // 30 seconds cooldown between resends
+const RESEND_COOLDOWN_MS = 60 * 1000; // 1 minute (60 seconds) cooldown between resends
 const MAX_ATTEMPTS = 5;
 
 /**

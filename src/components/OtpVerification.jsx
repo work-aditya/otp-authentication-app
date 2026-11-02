@@ -20,8 +20,8 @@ export default function OtpVerification({
   const [secondsRemaining, setSecondsRemaining] = useState(totalSeconds);
   const [isExpired, setIsExpired] = useState(false);
 
-  // Resend cooldown (30s)
-  const [resendCooldown, setResendCooldown] = useState(30);
+  // Resend cooldown (1 min / 60s)
+  const [resendCooldown, setResendCooldown] = useState(60);
 
   const inputRefs = useRef([]);
 
@@ -159,7 +159,7 @@ export default function OtpVerification({
         setOtp(['', '', '', '', '', '']);
         setSecondsRemaining(Math.floor((result.expiresInMs || 120000) / 1000));
         setIsExpired(false);
-        setResendCooldown(30);
+        setResendCooldown(60);
         inputRefs.current[0]?.focus();
         setInfoMessage('New security token dispatched to your email.');
       }

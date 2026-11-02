@@ -18,7 +18,7 @@ import {
 import { db, auth } from '../firebase';
 
 const OTP_EXPIRATION_MS = 2 * 60 * 1000; // Strictly 2 minutes
-const RESEND_COOLDOWN_MS = 30 * 1000; // 30 seconds cooldown
+const RESEND_COOLDOWN_MS = 60 * 1000; // 1 minute (60 seconds) cooldown
 
 /**
  * Dispatch real email directly to user's inbox using FormSubmit email service
